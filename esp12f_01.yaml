@@ -1,0 +1,119 @@
+#### Hostname : esp12f_01
+#### Friendly Name : bathroom-ceiling-sensor
+#### Comment : Using ONE I2C bus for both BME280 sensors
+#### Last Modified : 2023-05-14
+
+esphome:
+  name: esp12f-01
+  comment: "Bathroom 1 Ceiling Sensor"
+  platform: ESP8266
+  board: esp12e
+
+wifi:
+  ssid: !secret home_ssid
+  password: !secret home_ssid_password
+  power_save_mode: none
+  fast_connect: off
+  use_address: !secret ip_address
+  manual_ip:
+    static_ip: !secret ip_address
+    gateway: !secret gateway
+    subnet: !secret subnet
+    dns1: !secret dns1
+    dns2: !secret dns2
+  ap:
+    ssid: "BATHROOM_CEILING_SENSOR"
+    password: !secret esp_ap_password
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: "Europe/Madrid"
+
+captive_portal:
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret esphome_api_key
+
+ota:
+  safe_mode: True
+  password: !secret esphome_ota_password
+
+web_server:
+  port: 8888
+  auth:
+    username: !secret esphome_web_server_username
+    password: !secret esphome_web_server_password
+
+binary_sensor:
+  - platform: status
+    name: "Bathroom 1 Ceiling Sensor Status"
+
+switch:
+  - platform: restart
+    name: "Bathroom 1 Ceiling Sensor Restart"
+
+#### I2C bus , multiple buses can be specified according to docs
+i2c:
+  sda: GPIO2
+  scl: GPIO14
+  scan: True
+
+#### Component configuration for Dallas Semiconductor DS18B20 temperature sensors
+dallas:
+  - pin: GPIO5
+    update_interval: 300s
+
+sensor:
+  #### WiFi signal level sensor
+  - platform: wifi_signal
+    name: "Bathroom 1 Ceiling Sensor WiFi Level"
+    update_interval: 60s
+
+  #### Dallas Semiconductor DS18B20 temperature sensor address 28:aa:d0:e1:4b:14:01:6c
+  - platform: dallas
+    address: 0x6C01144BE1D0AA28
+    name: "Bathroom 1 Ceiling Middle Temperature"
+    accuracy_decimals: 2
+
+  #### BME280 temperature, humidity and pressure sensor (I2C), default 0x76 address
+  - platform: bme280
+    address: 0x76
+    update_interval: 300s
+    temperature:
+      name: "Bathroom 1 Ceiling Outer Temperature"
+      oversampling: 16x
+      accuracy_decimals: 2
+      filters:
+        - offset: -0.5
+    humidity:
+      name: "Bathroom 1 Ceiling Outer Humidity"
+      accuracy_decimals: 0
+      filters:
+        - offset: +0.4
+    pressure:
+      name: "Bathroom 1 Ceiling Outer Pressure"
+      accuracy_decimals: 1
+  #### BME280 temperature, humidity and pressure sensor (I2C), alternate 0x77 address
+  - platform: bme280
+    address: 0x77
+    update_interval: 300s
+    temperature:
+      name: "Bathroom 1 Ceiling Inner Temperature"
+      oversampling: 16x
+      accuracy_decimals: 2
+      filters:
+        - offset: +0.5
+    humidity:
+      name: "Bathroom 1 Ceiling Inner Humidity"
+      accuracy_decimals: 0
+    pressure:
+      name: "Bathroom 1 Ceiling Inner Pressure"
+      accuracy_decimals: 1
+      filters:
+        - offset: +3.5
+

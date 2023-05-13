@@ -1,0 +1,91 @@
+#### Hostname : esp12f-02
+#### Friendly Name : livingroom-west-sensor
+#### Last Modified : 2023-05-14
+
+esphome:
+  name: esp12f-02
+  comment: "Living Room West Wall Sensor"
+  platform: ESP8266
+  board: esp12e
+
+wifi:
+  ssid: !secret home_ssid
+  password: !secret home_ssid_password
+  power_save_mode: none
+  fast_connect: off
+  use_address: !secret ip_address
+  manual_ip:
+    static_ip: !secret ip_address
+    gateway: !secret gateway
+    subnet: !secret subnet
+    dns1: !secret dns1
+    dns2: !secret dns2
+  ap:
+    ssid: "LIVINGROOM_WEST_WALL_SENSOR"
+    password: !secret esp_ap_password
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: "Europe/Madrid"
+
+captive_portal:
+
+logger:
+  level: WARN
+
+api:
+  encryption:
+    key: !secret esphome_api_key
+
+ota:
+  safe_mode: True
+  password: !secret esphome_ota_password
+
+web_server:
+  port: 8888
+  auth:
+    username: !secret esphome_web_server_username
+    password: !secret esphome_web_server_password
+
+binary_sensor:
+  - platform: status
+    name: "Living Room West Wall Sensor Status"
+
+switch:
+  - platform: restart
+    name: "Living Room West Wall Sensor Restart"
+
+#### Component configuration for Dallas Semiconductor DS18B20 temperature sensors
+dallas:
+  - pin: GPIO5
+    update_interval: 300s
+
+sensor:
+  #### WiFi signal level sensor
+  - platform: wifi_signal
+    name: "Living Room West Wall Sensor WiFi Level"
+    update_interval: 60s
+
+  #### Dallas Semiconductor DS18B20 temperature sensor address 28:0d:9e:77:91:0c:02:1d
+  - platform: dallas
+    address: 0x1D020C91779E0D28
+    name: "Living Room West Wall Outer Temperature"
+    accuracy_decimals: 2
+    filters:
+      - offset: +0.6
+  #### Dallas Semiconductor DS18B20 temperature sensor address 28:23:07:77:91:12:02:cc
+  - platform: dallas
+    address: 0xCC02129177072328
+    name: "Living Room West Wall Middle Temperature"
+    accuracy_decimals: 2
+  #### Dallas Semiconductor DS18B20 temperature sensor address 28:3f:43:77:91:18:02:fb
+  - platform: dallas
+    address: 0xFB02189177433F28
+    name: "Living Room West Wall Inner Temperature"
+    accuracy_decimals: 2
+  #### Dallas Semiconductor DS18B20 temperature sensor address 28:61:32:77:91:0b:02:df
+  - platform: dallas
+    address: 0xDF020B9177326128
+    name: "Living Room West Wall Plasterboard Temperature"
+    accuracy_decimals: 2
