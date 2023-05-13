@@ -1,0 +1,78 @@
+#### Hostname : sonoff-txt01c-02
+#### Friendly Name : mechanical-room
+#### Last Modified : 2023-05-14
+
+esphome:
+  name: sonoff-txt01c-02
+  comment: "SONOFF Switch TX T0 1C Mechanical Room"
+  platform: ESP8266
+  board: esp01_1m
+
+wifi:
+  ssid: !secret home_ssid
+  password: !secret home_ssid_password
+  power_save_mode: none
+  fast_connect: off
+  use_address: !secret ip_address
+  manual_ip:
+    static_ip: !secret ip_address
+    gateway: !secret gateway
+    subnet: !secret subnet
+    dns1: !secret dns1
+    dns2: !secret dns2
+  ap:
+    ssid: "SONOFF_TX_T0_1C_02"
+    password: !secret esp_ap_password
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: "Europe/Madrid"
+
+captive_portal:
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret esphome_api_key
+
+ota:
+  safe_mode: True
+  password: !secret esphome_ota_password
+
+#web_server:
+#  port: 8888
+#  auth:
+#    username: !secret esphome_web_server_username
+#    password: !secret esphome_web_server_password
+
+sensor:
+  #### WiFi signal level sensor
+  - platform: wifi_signal
+    name: "Mechanical Room Switch WiFi Level"
+    update_interval: 60s
+
+binary_sensor:
+  - platform: status
+    name: "Mechanical Room Switch Status"
+  - platform: gpio
+    name: "Mechanical Room Touchpad Ceiling"
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_on: 10ms
+    on_press:
+      - switch.toggle: relay_1
+
+switch:
+  - platform: restart
+    name: "Mechanical Room Switch Restart"
+  - platform: gpio
+    name: "Mechanical Room Relay Ceiling"
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin: GPIO12
+    id: relay_1

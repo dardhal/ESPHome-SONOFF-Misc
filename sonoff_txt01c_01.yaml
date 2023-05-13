@@ -1,0 +1,106 @@
+#### Hostname : sonoff-txt01c-01
+#### Friendly Name : kitchen-entrance
+#### Last Modified : 2023-05-14
+
+esphome:
+  name: sonoff-txt01c-01
+  comment: "SONOFF Switch TX T0 1C Kitchen Entrance"
+  platform: ESP8266
+  board: esp01_1m
+
+wifi:
+  ssid: !secret home_ssid
+  password: !secret home_ssid_password
+  power_save_mode: none
+  fast_connect: off
+  use_address: !secret ip_address
+  manual_ip:
+    static_ip: !secret ip_address
+    gateway: !secret gateway
+    subnet: !secret subnet
+    dns1: !secret dns1
+    dns2: !secret dns2
+  ap:
+    ssid: "SONOFF_TX_T0_1C_01"
+    password: !secret esp_ap_password
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: "Europe/Madrid"
+
+captive_portal:
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret esphome_api_key
+
+ota:
+  safe_mode: True
+  password: !secret esphome_ota_password
+
+#web_server:
+#  port: 8888
+#  auth:
+#    username: !secret esphome_web_server_username
+#    password: !secret esphome_web_server_password
+
+mqtt:
+  broker: 192.168.1.10
+  port: 1883
+  discovery: True
+  discovery_retain: True
+  discovery_prefix: "homeassistant"
+  topic_prefix: home/indoors/kitchen/entrance
+  on_message:
+    - topic: home/indoors/kitchen/switch/ceiling/num_state
+      payload: "1"
+      then:
+        - switch.turn_on: relay_1
+        - delay: 1s
+    - topic: home/indoors/kitchen/switch/ceiling/num_state
+      payload: "0"
+      then:
+        - switch.turn_off: relay_1
+        - delay: 1s
+
+sensor:
+  #### WiFi signal level sensor
+  - platform: wifi_signal
+    name: "Kitchen Entrance Switch WiFi Level"
+    update_interval: 60s
+
+binary_sensor:
+  - platform: status
+    name: "Kitchen Entrance Switch Status"
+  - platform: gpio
+    name: "Kitchen Entrance Touchpad Ceiling"
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_on: 10ms
+    on_press:
+      - switch.toggle: relay_1
+
+switch:
+  - platform: restart
+    name: "Kitchen Entrance Switch Restart"
+  - platform: gpio
+    name: "Kitchen Entrance Relay Ceiling"
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin: GPIO12
+    id: relay_1
+    on_turn_on:
+      - mqtt.publish:
+          topic: home/indoors/kitchen/switch/ceiling/num_state
+          payload: 1
+    on_turn_off:
+      - mqtt.publish:
+          topic: home/indoors/kitchen/switch/ceiling/num_state
+          payload: 0
+
