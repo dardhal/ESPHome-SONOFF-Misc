@@ -1,0 +1,123 @@
+# Hostname : sonoff-dualr3-02
+# Friendly Name : telecom-voltage
+# Summary : SONOFF DUAL R3 #2 within telecom closet, controlling TV (Relay 1) and Zigbee Router (Relay 2), and providing (hopefully) voltage reference
+# https://templates.blakadder.com/sonoff_DUALR3.html
+# https://esphome.io/components/sensor/bl0939.html
+#
+# Last Modified : 2023-05-14
+#
+esphome:
+  name: telecom-voltage
+  comment: "Telecom Closet and Voltage Control (SONOFF DUAL R3 02)"
+  platform: ESP32
+  board: nodemcu-32s
+
+wifi:
+  ssid: !secret home_ssid
+  password: !secret home_ssid_password
+  power_save_mode: none
+  fast_connect: on
+  use_address: !secret ip_address
+  manual_ip:
+    static_ip: !secret ip_address
+    gateway: !secret gateway
+    subnet: !secret subnet
+    dns1: !secret dns1
+    dns2: !secret dns2
+  ap:
+    ssid: "TELECOM_CLOSET_CONTROL"
+    password: !secret esp_ap_password
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: "Europe/Madrid"
+
+captive_portal:
+
+api:
+  encryption:
+    key: !secret esphome_api_key
+
+ota:
+  safe_mode: True
+  password: !secret esphome_ota_password
+
+web_server:
+  port: 8888
+  auth:
+    username: !secret esphome_web_server_username
+    password: !secret esphome_web_server_password
+
+
+# Disable logging over serial as conflicts with UART
+logger:
+  baud_rate: 0
+
+uart:
+  tx_pin: GPIO25
+  rx_pin: GPIO26
+  baud_rate: 4800
+  parity: NONE
+  stop_bits: 2
+
+switch:
+  - platform: restart
+    name: "Telecom Closet Dual R3 Restart"
+  - platform: gpio
+    name: "TV Socket Relay"
+    restore_mode: ALWAYS_ON
+    pin: GPIO27
+    id: relay_1
+  - platform: gpio
+    name: "Zigbee Router Relay"
+    restore_mode: ALWAYS_OFF
+    pin: GPIO14
+    id: relay_2
+
+binary_sensor:
+  - platform: status
+    name: "Telecom Closet Dual R3 Status"
+  - platform: gpio
+    name: "Telecom Closet Dual R3 Button"
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_on: 10ms
+    on_press:
+      - switch.toggle: relay_1
+
+sensor:
+  - platform: wifi_signal
+    name: "Telecom Closet Dual R3 WiFi Level"
+    update_interval: 60s
+  - platform: bl0939
+    update_interval: 30s
+    voltage:
+      name: 'Telecom Closet Dual R3 AC Voltage'
+      filters:
+        - lambda: if (x < 180) return 0.0; else return x;
+    current_1:
+      name: 'TV Socket AC Current'
+    current_2:
+      name: 'Zigbee Router AC Current'
+    active_power_1:
+      name: 'TV Socket Active Power'
+    active_power_2:
+      name: 'Zigbee Router Active Power'
+    energy_1:
+      name: 'TV Socket Energy Consumed'
+    energy_2:
+      name: 'Zigbee Router Energy Consumed'
+    energy_total:
+      name: 'Total Telecom Closet Dual R3 Energy Consumed'
+
+light:
+  - platform: status_led
+    name: "Telecom Closet Dual R3 Status LED"
+    pin:
+      number: GPIO13
+      inverted: true
+
