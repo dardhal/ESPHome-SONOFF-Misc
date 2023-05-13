@@ -1,0 +1,90 @@
+#### Hostname : estor-oeste
+#### Friendly Name : SONOFF DUALR3 01
+#### Last Modified : 2023-05-14
+#
+
+esphome:
+  name: estor-oeste
+  comment: "SONOFF DUAL R3 West Blind"
+  platform: ESP32
+  board: esp32dev
+
+wifi:
+  ssid: !secret home_ssid
+  password: !secret home_ssid_password
+  power_save_mode: none
+  fast_connect: off
+  use_address: !secret ip_address
+  manual_ip:
+    static_ip: !secret ip_address
+    gateway: !secret gateway
+    subnet: !secret subnet
+    dns1: !secret dns1
+    dns2: !secret dns2
+  ap:
+    ssid: "SONOFF_DUAL_R3_01"
+    password: !secret esp_ap_password
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: "Europe/Madrid"
+
+captive_portal:
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret esphome_api_key
+
+ota:
+  safe_mode: True
+  password: !secret esphome_ota_password
+
+web_server:
+  port: 8888
+  auth:
+    username: !secret esphome_web_server_username
+    password: !secret esphome_web_server_password
+
+sensor:
+  - platform: wifi_signal
+    name: "SONOFF DUAL R3 West Blind WiFi Level"
+    update_interval: 60s
+
+binary_sensor:
+  - platform: status
+    name: "SONOFF DUAL R3 West Blind Status"
+
+switch:
+  - platform: restart
+    name: "SONOFF DUAL R3 West Blind Restart"
+  - platform: gpio
+    name: "West Blind Upwards Relay"
+    restore_mode: ALWAYS_OFF
+    pin: GPIO27
+    id: relay_up
+  - platform: gpio
+    name: "West Blind Downwards Relay"
+    restore_mode: ALWAYS_OFF
+    pin: GPIO14
+    id: relay_down
+
+cover:
+  - platform: time_based
+    name: "Time-Based West Window Blind"
+    has_built_in_endstop: false
+    assumed_state: true
+    id: west_window_blind_cover_id
+    open_action:
+      - switch.turn_on: relay_up
+    open_duration: 16s
+    close_action:
+      - switch.turn_on: relay_down
+    close_duration: 16s
+    stop_action:
+      - switch.turn_off: relay_up
+      - switch.turn_off: relay_down
+
