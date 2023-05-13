@@ -1,0 +1,95 @@
+#### Hostname : sonoff-minir2-01
+#### Friendly Name : SONOFF Mini R2 01
+#### Last Modified : 2023-05-14
+
+esphome:
+  name: sonoff-minir2-01
+  comment: "SONOFF Mini R2 01"
+  platform: ESP8266
+  board: esp01_1m
+  on_boot:
+    priority: -10
+    then:
+      - light.turn_on: blue_led_light
+
+wifi:
+  ssid: !secret home_ssid
+  password: !secret home_ssid_password
+  power_save_mode: none
+  fast_connect: off
+  use_address: !secret ip_address
+  manual_ip:
+    static_ip: !secret ip_address
+    gateway: !secret gateway
+    subnet: !secret subnet
+    dns1: !secret dns1
+    dns2: !secret dns2
+  ap:
+    ssid: "SONOFF_MINIR2_01"
+    password: !secret esp_ap_password
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: "Europe/Madrid"
+
+captive_portal:
+
+logger:
+  level: WARN
+
+api:
+  encryption:
+    key: !secret esphome_api_key
+
+ota:
+  safe_mode: True
+  password: !secret esphome_ota_password
+
+web_server:
+  port: 8888
+  auth:
+    username: !secret esphome_web_server_username
+    password: !secret esphome_web_server_password
+
+sensor:
+  - platform: wifi_signal
+    name: "SONOFF MINI R2 01 WiFi Level"
+    update_interval: 60s
+
+binary_sensor:
+  - platform: status
+    name: "SONOFF MINI R2 01 Status"
+  - platform: gpio
+    name: "Button Relay 1"
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_on: 10ms
+    on_press:
+      - switch.toggle: relay_1
+
+switch:
+  - platform: restart
+    name: "SONOFF MINI R2 01 Switch Restart"
+  - platform: gpio
+    name: "SONOFF MINI R2 01 Relay"
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin: GPIO12
+    id: relay_1
+
+output:
+  - platform: esp8266_pwm
+    id: blue_led
+    pin: GPIO13
+    inverted: True
+
+light:
+  - platform: monochromatic
+    name: "Blue LED"
+    output: blue_led
+    internal: True
+    id: blue_led_light
+
