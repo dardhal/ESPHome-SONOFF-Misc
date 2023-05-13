@@ -1,10 +1,10 @@
-#### Hostname : sonoff-txt01c-03
-#### Friendly Name : hall-center
+#### Hostname : sonoff-txt02c-01
+#### Friendly Name : living-entrance
 #### Last Modified : 2023-05-14
 
 esphome:
-  name: sonoff-txt01c-03
-  comment: "SONOFF Switch TX T0 1C Hall Center"
+  name: sonoff-txt02c-01
+  comment: "SONOFF Switch TX T0 2C Living Room Entrance"
   platform: ESP8266
   board: esp01_1m
 
@@ -21,7 +21,7 @@ wifi:
     dns1: !secret dns1
     dns2: !secret dns2
   ap:
-    ssid: "SONOFF_TX_T0_1C_03"
+    ssid: "SONOFF_TX_T0_2C_01"
     password: !secret esp_ap_password
 
 time:
@@ -54,30 +54,40 @@ mqtt:
   discovery: True
   discovery_retain: True
   discovery_prefix: "homeassistant"
-  topic_prefix: home/indoors/hall/center
+  topic_prefix: home/indoors/living/entrance
   on_message:
-    - topic: home/indoors/hall/switch/ceiling/num_state
+    - topic: home/indoors/living/switch/ceiling_tv/num_state
       payload: "1"
       then:
         - switch.turn_on: relay_1
         - delay: 1s
-    - topic: home/indoors/hall/switch/ceiling/num_state
+    - topic: home/indoors/living/switch/ceiling_tv/num_state
       payload: "0"
       then:
         - switch.turn_off: relay_1
+        - delay: 1s
+    - topic: home/indoors/living/switch/ceiling_sofa/num_state
+      payload: "1"
+      then:
+        - switch.turn_on: relay_2
+        - delay: 1s
+    - topic: home/indoors/living/switch/ceiling_sofa/num_state
+      payload: "0"
+      then:
+        - switch.turn_off: relay_2
         - delay: 1s
 
 sensor:
   #### WiFi signal level sensor
   - platform: wifi_signal
-    name: "Hall Center Switch WiFi Level"
+    name: "Living Room Entrance WiFi Level"
     update_interval: 60s
 
 binary_sensor:
   - platform: status
-    name: "Hall Center Switch Status"
+    name: "Living Room Entrance Switch Status"
   - platform: gpio
-    name: "Hall Center Touchpad Ceiling"
+    name: "Living Room Entrance Touchpad TV"
     pin:
       number: GPIO0
       mode: INPUT_PULLUP
@@ -86,21 +96,42 @@ binary_sensor:
       - delayed_on: 10ms
     on_press:
       - switch.toggle: relay_1
+  - platform: gpio
+    name: "Living Room Entrance Touchpad Sofa"
+    pin:
+      number: GPIO9
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_on: 10ms
+    on_press:
+      - switch.toggle: relay_2
 
 switch:
   - platform: restart
-    name: "Hall Center Switch Restart"
+    name: "Living Room Entrance Switch Restart"
   - platform: gpio
-    name: "Hall Center Relay Ceiling (Unused)"
-    restore_mode: RESTORE_DEFAULT_OFF
+    name: "Living Room Entrance Relay TV Ceiling"
     pin: GPIO12
     id: relay_1
     on_turn_on:
       - mqtt.publish:
-          topic: home/indoors/hall/switch/ceiling/num_state
+          topic: home/indoors/living/switch/ceiling_tv/num_state
           payload: 1
     on_turn_off:
       - mqtt.publish:
-          topic: home/indoors/hall/switch/ceiling/num_state
+          topic: home/indoors/living/switch/ceiling_tv/num_state
+          payload: 0
+  - platform: gpio
+    name: "Living Room Entrance Relay Sofa Ceiling"
+    pin: GPIO5
+    id: relay_2
+    on_turn_on:
+      - mqtt.publish:
+          topic: home/indoors/living/switch/ceiling_sofa/num_state
+          payload: 1
+    on_turn_off:
+      - mqtt.publish:
+          topic: home/indoors/living/switch/ceiling_sofa/num_state
           payload: 0
 

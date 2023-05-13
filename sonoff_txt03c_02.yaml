@@ -1,10 +1,10 @@
-#### Hostname : sonoff-txt01c-03
-#### Friendly Name : hall-center
+#### Hostname : sonoff-txt03c-02
+#### Friendly Name : bathroom-1
 #### Last Modified : 2023-05-14
 
 esphome:
-  name: sonoff-txt01c-03
-  comment: "SONOFF Switch TX T0 1C Hall Center"
+  name: sonoff-txt03c-02
+  comment: "SONOFF Switch TX T0 3C Bathroom 1"
   platform: ESP8266
   board: esp01_1m
 
@@ -21,7 +21,7 @@ wifi:
     dns1: !secret dns1
     dns2: !secret dns2
   ap:
-    ssid: "SONOFF_TX_T0_1C_03"
+    ssid: "SONOFF_TX_T0_3C_02"
     password: !secret esp_ap_password
 
 time:
@@ -48,36 +48,37 @@ ota:
 #    username: !secret esphome_web_server_username
 #    password: !secret esphome_web_server_password
 
-mqtt:
-  broker: !secret mqtt
-  port: 1883
-  discovery: True
-  discovery_retain: True
-  discovery_prefix: "homeassistant"
-  topic_prefix: home/indoors/hall/center
-  on_message:
-    - topic: home/indoors/hall/switch/ceiling/num_state
-      payload: "1"
-      then:
-        - switch.turn_on: relay_1
-        - delay: 1s
-    - topic: home/indoors/hall/switch/ceiling/num_state
-      payload: "0"
-      then:
-        - switch.turn_off: relay_1
-        - delay: 1s
-
 sensor:
   #### WiFi signal level sensor
   - platform: wifi_signal
-    name: "Hall Center Switch WiFi Level"
+    name: "Bathroom 1 Switch WiFi Level"
     update_interval: 60s
 
 binary_sensor:
   - platform: status
-    name: "Hall Center Switch Status"
+    name: "Bathroom 1 Switch Status"
   - platform: gpio
-    name: "Hall Center Touchpad Ceiling"
+    name: "Bathroom 1 Touchpad Ceiling"
+    pin:
+      number: GPIO10
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_on: 10ms
+    on_press:
+      - switch.toggle: relay_1
+  - platform: gpio
+    name: "Bathroom 1 Touchpad Mirror"
+    pin:
+      number: GPIO9
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_on: 10ms
+    on_press:
+      - switch.toggle: relay_2
+  - platform: gpio
+    name: "Bathroom 1 Touchpad Shower"
     pin:
       number: GPIO0
       mode: INPUT_PULLUP
@@ -85,22 +86,24 @@ binary_sensor:
     filters:
       - delayed_on: 10ms
     on_press:
-      - switch.toggle: relay_1
+      - switch.toggle: relay_3
 
 switch:
   - platform: restart
-    name: "Hall Center Switch Restart"
+    name: "Bathroom 1 Switch Restart"
   - platform: gpio
-    name: "Hall Center Relay Ceiling (Unused)"
+    name: "Bathroom 1 Relay Shower"
     restore_mode: RESTORE_DEFAULT_OFF
     pin: GPIO12
+    id: relay_3
+  - platform: gpio
+    name: "Bathroom 1 Relay Mirror"
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin: GPIO5
+    id: relay_2
+  - platform: gpio
+    name: "Bathroom 1 Relay Ceiling"
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin: GPIO4
     id: relay_1
-    on_turn_on:
-      - mqtt.publish:
-          topic: home/indoors/hall/switch/ceiling/num_state
-          payload: 1
-    on_turn_off:
-      - mqtt.publish:
-          topic: home/indoors/hall/switch/ceiling/num_state
-          payload: 0
 
