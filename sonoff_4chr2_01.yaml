@@ -1,0 +1,172 @@
+#### Hostname : sonoff-4chr2-01
+#### Friendly Name : SONOFF 4CH R2
+#### Last Modified : 2023-05-14
+
+esphome:
+  name: sonoff-4chr2-01
+  comment: "SONOFF 4CH R2"
+  platform: ESP8266
+  board: esp01_1m
+  on_boot:
+    priority: -10
+    then:
+      - light.turn_on: blue_led_light
+
+wifi:
+  ssid: !secret home_ssid
+  password: !secret home_ssid_password
+  power_save_mode: none
+  fast_connect: off
+  use_address: !secret ip_address
+  manual_ip:
+    static_ip: !secret ip_address
+    gateway: !secret gateway
+    subnet: !secret subnet
+    dns1: !secret dns1
+    dns2: !secret dns2
+  ap:
+    ssid: "SONOFF_4C_R2_01"
+    password: !secret esp_ap_password
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: "Europe/Madrid"
+
+captive_portal:
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret esphome_api_key
+
+ota:
+  safe_mode: True
+  password: !secret esphome_ota_password
+
+web_server:
+  port: 8888
+  auth:
+    username: !secret esphome_web_server_username
+    password: !secret esphome_web_server_password
+
+mqtt:
+  broker: 192.168.1.10
+  port: 1883
+  discovery: True
+  discovery_retain: True
+  discovery_prefix: "homeassistant"
+  topic_prefix: home/indoors/testing/sonoff_4chr2_01
+
+sensor:
+  #### WiFi signal level sensor
+  - platform: wifi_signal
+    name: "SONOFF 4CH R2 WiFi Level"
+    update_interval: 60s
+
+binary_sensor:
+  - platform: status
+    name: "SONOFF 4CH R2 Status"
+  - platform: gpio
+    name: "Button Relay 1"
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+      - switch.toggle: relay_1
+  - platform: gpio
+    name: "Button Relay 2"
+    pin:
+      number: GPIO9
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+      - switch.toggle: relay_2
+  - platform: gpio
+    name: "Button Relay 3"
+    pin:
+      number: GPIO10
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+      - switch.toggle: relay_3
+  - platform: gpio
+    name: "Button Relay 4"
+    pin:
+      number: GPIO14
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+      - switch.toggle: relay_4
+
+switch:
+  - platform: restart
+    name: "SONOFF 4CH R2 Restart"
+  - platform: gpio
+    name: "Attic Relay North"
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin: GPIO12
+    id: relay_1
+    on_turn_on:
+      - mqtt.publish:
+          topic: home/indoors/testing/switch/sonoff_4chr2_01/relay_1/num_state
+          payload: 1
+    on_turn_off:
+      - mqtt.publish:
+          topic: home/indoors/testing/switch/sonoff_4chr2_01/relay_1/num_state
+          payload: 0
+  - platform: gpio
+    name: "Attic Relay South"
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin: GPIO5
+    id: relay_2
+    on_turn_on:
+      - mqtt.publish:
+          topic: home/indoors/testing/switch/sonoff_4chr2_01/relay_2/num_state
+          payload: 1
+    on_turn_off:
+      - mqtt.publish:
+          topic: home/indoors/testing/switch/sonoff_4chr2_01/relay_2/num_state
+          payload: 0
+  - platform: gpio
+    name: "Attic Relay East"
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin: GPIO4
+    id: relay_3
+    on_turn_on:
+      - mqtt.publish:
+          topic: home/indoors/testing/switch/sonoff_4chr2_01/relay_3/num_state
+          payload: 1
+    on_turn_off:
+      - mqtt.publish:
+          topic: home/indoors/testing/switch/sonoff_4chr2_01/relay_3/num_state
+          payload: 0
+  - platform: gpio
+    name: "Attic Relay West"
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin: GPIO15
+    id: relay_4
+    on_turn_on:
+      - mqtt.publish:
+          topic: home/indoors/testing/switch/sonoff_4chr2_01/relay_4/num_state
+          payload: 1
+    on_turn_off:
+      - mqtt.publish:
+          topic: home/indoors/testing/switch/sonoff_4chr2_01/relay_4/num_state
+          payload: 0
+
+output:
+  - platform: esp8266_pwm
+    id: blue_led
+    pin: GPIO13
+    inverted: True
+
+light:
+  - platform: monochromatic
+    name: "Blue LED"
+    output: blue_led
+    internal: True
+    id: blue_led_light
